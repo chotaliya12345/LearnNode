@@ -41,35 +41,105 @@ const server = http.createServer((req, res) => {
       body += chunk;
     });
 
+    console.log(body);
+
     req.on("end", () => {
       try {
         fs.readFile(datapath, "utf-8", (err, data) => {
           if (err) {
             res.writeHead(500, { "Content-Type": "application/json" });
             res.end(JSON.stringify({ errorMessage: err.message }));
-            return;
           }
 
-          const existingData = JSON.parse(data);
-
+          const exisData = JSON.parse(data);
           const newData = JSON.parse(body);
 
-          existingData.push(newData);
+          exisData.push(newData);
+          console.log(exisData);
 
-          fs.writeFile(datapath, JSON.stringify(existingData), (err) => {
+          fs.writeFile(datapath, JSON.stringify(exisData), (err) => {
             if (err) {
               res.writeHead(500, { "Content-Type": "application/json" });
               res.end(JSON.stringify({ errorMessage: err.message }));
-              return;
             }
 
-            res.writeHead(201, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ message: "Data added successfully" }));
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ message: "Data added succssfully" }));
           });
         });
       } catch (error) {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ errorMessage: "Invalid JSON data" }));
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ errorMessage: error.message }));
+      }
+    });
+  } else if (method === "DELETE" && pathname === "/institute") {
+    try {
+      fs.readFile(datapath, "utf-8", (err, data) => {
+        if (err) {
+          res.writeHead(500, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ errorMessage: err.message }));
+        }
+
+        const exisData = JSON.parse(data);
+
+        const id = url.parse(req.url, true).query.id;
+
+        const index = exisData.findIndex((v) => v.id == id);
+
+        exisData.splice(index, 1);
+
+        console.log(exisData, id, index);
+
+        fs.writeFile(datapath, JSON.stringify(exisData), (err) => {
+          if (err) {
+            res.writeHead(500, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ errorMessage: err.message }));
+          }
+
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ message: "Data deletd succssfully" }));
+        });
+      });
+    } catch (error) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ errorMessage: error.message }));
+    }
+  } else if (method === "PUT" && pathname === "/institute") {
+    let body = "";
+
+    req.on("data", (chunk) => {
+      body += chunk;
+    });
+
+    req.on("end", () => {
+      try {
+        fs.readFile(datapath, "utf-8", (err, data) => {
+          if (err) {
+            res.writeHead(500, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ errorMessage: err.message }));
+          }
+
+          const exisData = JSON.parse(data);
+          const newData = JSON.parse(body);
+          const id = url.parse(req.url, true).query.id;
+
+          const index = exisData.findIndex((v) => v.id == id);
+
+          exisData[index] = newData;
+
+          fs.writeFile(datapath, JSON.stringify(exisData), (err) => {
+            if (err) {
+              res.writeHead(500, { "Content-Type": "application/json" });
+              res.end(JSON.stringify({ errorMessage: err.message }));
+            }
+
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ message: "Data edited succssfully" }));
+          });
+        });
+      } catch (error) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ errorMessage: error.message }));
       }
     });
   }
